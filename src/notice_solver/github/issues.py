@@ -131,6 +131,18 @@ class GitHubIssues:
             labels=new_labels,
         )
 
+    def get_known_notice_ids(self) -> dict[str, int]:
+        """GitHub Issues에서 기수집 공지 ID 목록을 반환한다. {notice_id: issue_number}"""
+        from notice_solver.github.frontmatter import parse_notice_meta
+        issues = self.list_issues(labels="phase:collection", state="open", limit=5000)
+        result: dict[str, int] = {}
+        for issue in issues:
+            meta = parse_notice_meta(issue.get("body") or "")
+            notice_id = meta.get("id")
+            if notice_id:
+                result[notice_id] = issue["number"]
+        return result
+
     def list_asset_issues(self, parent_notice_id: str) -> list[dict]:
         all_issues = self.list_issues(labels="type:asset", state="open", limit=500)
         results = []

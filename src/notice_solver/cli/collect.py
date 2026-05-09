@@ -36,17 +36,29 @@ def register(app: typer.Typer) -> None:
         )
 
         index = NoticeIndex(settings.cache_dir)
-        known_ids = {k for k in _read_index_keys(index)}
 
         mode = "전체" if full else "증분"
         typer.echo(f"[{_now()}] 수집 시작: {board_id} ({mode}){' [dry-run]' if dry_run else ''}")
 
+        try:
+            gh = GitHubIssues(settings.github_token, settings.github_repo_owner, settings.github_repo_name)
+        except Exception as e:
+            typer.echo(f"[오류] GitHub API 초기화 실패: {e}", err=True)
+            raise typer.Exit(code=2)
+
+        # GitHub Issues를 권위 있는 중복 방지 인덱스로 사용
+        # (로컬 캐시는 만료될 수 있으므로 Issues가 항상 최신 기준)
         if not dry_run:
-            try:
-                gh = GitHubIssues(settings.github_token, settings.github_repo_owner, settings.github_repo_name)
-            except Exception as e:
-                typer.echo(f"[오류] GitHub API 초기화 실패: {e}", err=True)
-                raise typer.Exit(code=2)
+            typer.echo(f"[{_now()}] GitHub Issues에서 기수집 목록 조회 중...")
+            gh_known = gh.get_known_notice_ids()
+            for nid, inum in gh_known.items():
+                if not index.exists(nid):
+                    index._data[nid] = inum
+            if gh_known:
+                index.save()
+            typer.echo(f"[{_now()}] 기수집: {len(index)}건")
+
+        known_ids = set(_read_index_keys(index))
 
         with HoseoCrawler(delay_sec=settings.request_delay_sec, retry_count=settings.retry_count) as crawler:
             try:
