@@ -32,6 +32,9 @@ cp .env.example .env
 ## 기본 사용 (4단계)
 
 ```bash
+# 최초 1회: GitHub 레이블 초기화 (필수)
+uv run notice-solver init-labels
+
 # Phase 1: 공지 수집 (증분, 기본)
 uv run notice-solver collect --board MAPP_1708240139
 
