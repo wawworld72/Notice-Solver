@@ -134,7 +134,7 @@ class GitHubIssues:
     def get_known_notice_ids(self) -> dict[str, int]:
         """GitHub Issues에서 기수집 공지 ID 목록을 반환한다. {notice_id: issue_number}"""
         from notice_solver.github.frontmatter import parse_notice_meta
-        issues = self.list_issues(labels="phase:collection", state="open", limit=5000)
+        issues = self.list_issues(labels="type:notice", state="open", limit=5000)
         result: dict[str, int] = {}
         for issue in issues:
             meta = parse_notice_meta(issue.get("body") or "")
@@ -154,7 +154,7 @@ class GitHubIssues:
         return results
 
     def _notice_labels(self, notice: Notice) -> list[str]:
-        labels = [f"phase:{notice.phase}"]
+        labels = ["type:notice", f"phase:{notice.phase}"]
         if notice.image_urls:
             labels.append("has:images")
         if notice.attachments:
