@@ -29,7 +29,8 @@ def parse_notice_page(html: str, board_id: str, source_id: str, base_url: str = 
 
     image_urls = extract_image_urls(content_html, base_url=base_url)
     attachments = extract_attachment_refs(content_html, base_url=base_url)
-    body_text = html_to_markdown(content_html)
+    body_html = _extract_body_html(content_soup)
+    body_text = html_to_markdown(body_html)
 
     return Notice(
         source_id=source_id,
@@ -170,6 +171,44 @@ def _strip_js_nav(el: BeautifulSoup) -> None:
         href = a.get("href") or ""
         if _JS_NAV_RE.search(href):
             a.decompose()
+
+
+_META_LABELS = frozenset((
+    "작성자", "Writer", "작 성 자",
+    "등록일자", "등록일", "Date",
+    "조회수", "조 회 수", "Views", "Hit", "Hits",
+))
+
+
+def _extract_body_html(soup: BeautifulSoup) -> str:
+    """공지 본문만 추출 — 제목·작성자·날짜·조회수 제외."""
+    from bs4 import NavigableString
+
+    # bbsView 테이블 구조: bbs-content td 또는 colspan td
+    bbs_td = soup.select_one("td.bbs-content, td.bbsContent, td.bbs_content")
+    if not bbs_td:
+        for td in soup.find_all("td", attrs={"colspan": True}):
+            bbs_td = td
+            break
+    if bbs_td:
+        inner = BeautifulSoup(str(bbs_td), "lxml")
+        _strip_js_nav(inner)
+        return str(inner)
+
+    # h5/strong 구조: 제목 헤딩 + 메타 라벨과 이어지는 텍스트 노드 제거
+    body_copy = BeautifulSoup(str(soup), "lxml")
+    for tag in list(body_copy.find_all(["h1", "h2", "h3", "h4", "h5"])):
+        tag.decompose()
+    for tag in list(body_copy.find_all(["strong", "b", "th"])):
+        if tag.get_text(strip=True) in _META_LABELS:
+            sib = tag.next_sibling
+            while sib and (isinstance(sib, NavigableString) or
+                           (hasattr(sib, "name") and sib.name in ("br", "span"))):
+                next_s = sib.next_sibling
+                sib.extract()
+                sib = next_s
+            tag.decompose()
+    return str(body_copy)
 
 
 def _extract_content_html(soup: BeautifulSoup) -> str:
