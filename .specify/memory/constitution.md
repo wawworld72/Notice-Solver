@@ -1,50 +1,103 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!-- Sync Impact Report
+Version change: N/A → 1.0.0 (initial ratification)
+Modified principles: N/A (initial adoption)
+Added sections: Core Principles (I–V), Technology Constraints, Development Workflow, Governance
+Removed sections: N/A
+Templates requiring updates:
+  - .specify/templates/plan-template.md ✅ Constitution Check gates derive from these principles
+  - .specify/templates/spec-template.md ✅ No structural changes required
+  - .specify/templates/tasks-template.md ✅ No structural changes required
+Follow-up TODOs: None — all placeholders resolved
+-->
+
+# Notice-Solver Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Reliable Data Collection
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Web crawlers MUST handle network failures, timeouts, and HTTP errors with configurable
+retry logic. Crawlers MUST respect `robots.txt` and enforce polite rate limiting
+(minimum 1-second delay between requests to the same host). Crawling sessions MUST be
+resumable after interruption without duplicating already-collected data.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: Bulletin boards are fragile targets; resilient collection prevents data
+gaps and avoids unintentional load on source servers.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Structured Knowledge Representation
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+Every notice MUST be normalized to the canonical Notice schema
+(`title`, `body`, `source_url`, `published_at`, `board_id`, `crawled_at`) before any
+storage or indexing operation. Raw HTML MUST NOT be stored as the primary artifact.
+Schema changes MUST be versioned and accompanied by a migration.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: Downstream knowledge base queries depend on a consistent shape; ad-hoc
+raw-data storage makes search and analysis fragile.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Test-First Development (NON-NEGOTIABLE)
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Tests MUST be written before implementation code. Each test MUST fail (red) before the
+corresponding implementation is written (green). The Red-Green-Refactor cycle is
+mandatory. No feature is complete until all associated tests pass.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Rationale**: Crawling logic is inherently stateful and timing-dependent; test-first
+discipline is the primary defense against silent regressions.
+
+### IV. Incremental Processing
+
+The system MUST support incremental crawl runs that collect only new or updated notices
+since the last run. Full re-crawls MUST be opt-in, not the default. Deduplication MUST
+use a stable canonical identifier (`source_url` + `published_at`) and MUST be
+idempotent across repeated runs.
+
+**Rationale**: Bulletin boards accumulate large archives; full re-crawls waste
+resources and inflate the knowledge base with duplicates.
+
+### V. Observability
+
+Every crawl run MUST produce a structured log entry per notice processed
+(`status`: collected / skipped / failed, source, timestamp). Aggregated run
+statistics (total collected, skipped, failed, duration) MUST be surfaced at run
+completion. Errors MUST be logged with sufficient context to reproduce the failure
+without code changes.
+
+**Rationale**: Silent failures in background crawling are operationally dangerous;
+structured output enables monitoring and debugging at any scale.
+
+## Technology Constraints
+
+- **Primary language**: Python 3.11+
+- **Crawling**: `requests` or `httpx`; `BeautifulSoup` or `lxml` for HTML parsing
+- **Storage**: Structured format only — SQLite (local/dev) or PostgreSQL (production);
+  raw HTML storage as the primary artifact is prohibited
+- **Knowledge base indexing**: Full-text search MUST be provided
+  (e.g., SQLite FTS5, Elasticsearch, or equivalent)
+- **Packaging**: Project MUST be installable as a Python package with a CLI entrypoint
+- **Secrets**: Configuration via environment variables or `.env` file;
+  secrets MUST NOT be committed to the repository
+
+## Development Workflow
+
+- All feature development MUST occur on a named branch; direct commits to `main`
+  are prohibited
+- Every pull request MUST include at least one automated test covering the new behavior
+- The `main` branch MUST remain deployable (all CI checks passing) at all times
+- Complexity beyond what the current feature requires MUST be justified in the PR
+  description (YAGNI enforcement)
+- Breaking schema changes MUST include a migration script executable without data loss
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other development guidelines for Notice-Solver.
+Amendments require: (1) a written rationale, (2) team agreement, (3) a version bump per
+the policy below, and (4) propagation of changes to affected templates and documentation.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Compliance is verified at every `Constitution Check` gate in implementation plans.
+Any violation detected during code review MUST be resolved before merge.
+
+**Versioning policy**:
+- MAJOR: principle removal or redefinition that breaks backward compatibility
+- MINOR: new principle or material section added
+- PATCH: wording clarifications, typo fixes, non-semantic refinements
+
+**Version**: 1.0.0 | **Ratified**: 2026-05-09 | **Last Amended**: 2026-05-09
