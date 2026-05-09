@@ -90,14 +90,14 @@ description: "Task list for 전체 공지사항 수집 시스템"
 
 ### ⚠️ 테스트 먼저 (RED 확인 후 구현)
 
-- [ ] T027 [P] [US2] `tests/unit/test_asset_parsers.py` 작성 — `extract_image_urls()`: img 태그 추출, 썸네일→원본 URL 변환, 빈 경우; `extract_attachment_refs()`: PDF·HWP·DOCX 링크 추출, 파일명·MIME 추론
-- [ ] T028 [US2] `tests/integration/test_assets.py` 작성 — mock GitHub API로 공지 Issue 조회, 자산 Issue 생성, 공지 Issue body 업데이트 검증; 자산 없는 공지 시 `has:no-assets` 레이블 검증; 이미 생성된 자산 스킵 검증
+- [x] T027 [P] [US2] `tests/unit/test_asset_parsers.py` 작성 — `extract_image_urls()`: img 태그 추출, 썸네일→원본 URL 변환, 빈 경우; `extract_attachment_refs()`: PDF·HWP·DOCX 링크 추출, 파일명·MIME 추론
+- [x] T028 [US2] `tests/integration/test_assets.py` 작성 — mock GitHub API로 공지 Issue 조회, 자산 Issue 생성, 공지 Issue body 업데이트 검증; 자산 없는 공지 시 `has:no-assets` 레이블 검증; 이미 생성된 자산 스킵 검증
 
 ### US2 구현
 
-- [ ] T029 [P] [US2] `src/notice_solver/github/issues.py` 확장 — `update_notice_body_with_assets(number, asset_issues)`: 공지 Issue body의 자산 목록 테이블 업데이트; `list_asset_issues(parent_notice_id)`: 특정 공지의 자산 Issue 목록 조회
-- [ ] T030 [US2] `src/notice_solver/cli/assets.py` 구현 — `assets_app = typer.Typer()`; `create(notice: int, limit: int, dry_run: bool)`: `phase:collection` 공지 Issue 조회 → 프론트매터 파싱 → 이미지·첨부 URL 추출 → 자산 Issue 생성 → 공지 Issue 업데이트(`phase:organization`); `status(board: str)`: 자산 현황 집계 출력
-- [ ] T031 [US2] `src/notice_solver/cli/main.py` 확장 — `assets` 서브커맨드 등록 (`assets create`, `assets status`)
+- [x] T029 [P] [US2] `src/notice_solver/github/issues.py` 확장 — `update_notice_body_with_assets(number, asset_issues)`: 공지 Issue body의 자산 목록 테이블 업데이트; `list_asset_issues(parent_notice_id)`: 특정 공지의 자산 Issue 목록 조회
+- [x] T030 [US2] `src/notice_solver/cli/assets.py` 구현 — `assets_app = typer.Typer()`; `create(notice: int, limit: int, dry_run: bool)`: `phase:collection` 공지 Issue 조회 → 프론트매터 파싱 → 이미지·첨부 URL 추출 → 자산 Issue 생성 → 공지 Issue 업데이트(`phase:organization`); `status(board: str)`: 자산 현황 집계 출력
+- [x] T031 [US2] `src/notice_solver/cli/main.py` 확장 — `assets` 서브커맨드 등록 (`assets create`, `assets status`)
 
 **Checkpoint**: US2 독립 검증 — 공지 Issue 존재 상태에서 `assets create` 실행 → 자산 Issue 생성 확인, 테스트 GREEN
 
@@ -110,16 +110,16 @@ description: "Task list for 전체 공지사항 수집 시스템"
 
 ### ⚠️ 테스트 먼저 (RED 확인 후 구현)
 
-- [ ] T032 [P] [US3] `tests/unit/test_ocr_image.py` 작성 — `EasyOCRWrapper.extract()`: 이미지 bytes 입력, 텍스트 반환, 신뢰도 임계값 필터, 빈 이미지 처리(→ no-text), 신뢰도 반환
-- [ ] T033 [P] [US3] `tests/unit/test_ocr_document.py` 작성 — `PdfExtractor.extract()`: pdfplumber mock, 텍스트 반환; `DocxExtractor.extract()`: python-docx mock; `HwpExtractor.extract()`: LibreOffice 실행 mock, 변환 실패 시 예외
-- [ ] T034 [US3] `tests/integration/test_ocr.py` 작성 — mock GitHub API + mock OCR: `status:raw` 이미지 자산 → OCR 실행 → 자산 Issue body 업데이트 + `status:ocr-complete` 레이블 검증; OCR 실패 → `status:ocr-failed` + 오류 코멘트 검증; 텍스트 없음 → `status:no-text` 검증
+- [x] T032 [P] [US3] `tests/unit/test_ocr_image.py` 작성 — `EasyOCRWrapper.extract()`: 이미지 bytes 입력, 텍스트 반환, 신뢰도 임계값 필터, 빈 이미지 처리(→ no-text), 신뢰도 반환
+- [x] T033 [P] [US3] `tests/unit/test_ocr_document.py` 작성 — `PdfExtractor.extract()`: pdfplumber mock, 텍스트 반환; `DocxExtractor.extract()`: python-docx mock; `HwpExtractor.extract()`: LibreOffice 실행 mock, 변환 실패 시 예외
+- [x] T034 [US3] `tests/integration/test_ocr.py` 작성 — mock GitHub API + mock OCR: `status:raw` 이미지 자산 → OCR 실행 → 자산 Issue body 업데이트 + `status:ocr-complete` 레이블 검증; OCR 실패 → `status:ocr-failed` + 오류 코멘트 검증; 텍스트 없음 → `status:no-text` 검증
 
 ### US3 구현
 
-- [ ] T035 [P] [US3] `src/notice_solver/ocr/image.py` 구현 — `EasyOCRWrapper` 클래스: `__init__`에서 `easyocr.Reader(['ko', 'en'], gpu=False)` 초기화(지연 로딩), `extract(image_bytes: bytes) -> tuple[str, float]`: readtext 실행, 신뢰도 필터링(`OCR_CONFIDENCE_THRESHOLD`), 한/영 텍스트 결합 반환; 빈 결과 시 `("", 0.0)`
-- [ ] T036 [P] [US3] `src/notice_solver/ocr/document.py` 구현 — `DocumentExtractor` 팩토리: `PdfExtractor`(pdfplumber), `DocxExtractor`(python-docx 단락·표), `XlsxExtractor`(openpyxl 셀값), `HwpExtractor`(subprocess LibreOffice→DOCX→DocxExtractor); `get_extractor(mime_type: str) -> BaseExtractor`; 변환 실패 시 `ExtractionError` raise
-- [ ] T037 [US3] `src/notice_solver/cli/ocr.py` 구현 — `ocr_app = typer.Typer()`; `run(limit: int, type: str, retry_failed: bool)`: `status:raw`(또는 `status:ocr-failed`) 자산 Issue 조회 → 유형별 추출기 선택 → 원본 URL 다운로드(httpx) → 추출 실행 → 자산 Issue 업데이트(OCR 텍스트 + 상태 레이블); `status()`: OCR 현황 집계; 배치 실패는 개별 처리, 전체 중단 없음
-- [ ] T038 [US3] `src/notice_solver/cli/main.py` 확장 — `ocr` 서브커맨드 등록 (`ocr run`, `ocr status`)
+- [x] T035 [P] [US3] `src/notice_solver/ocr/image.py` 구현 — `EasyOCRWrapper` 클래스: `__init__`에서 `easyocr.Reader(['ko', 'en'], gpu=False)` 초기화(지연 로딩), `extract(image_bytes: bytes) -> tuple[str, float]`: readtext 실행, 신뢰도 필터링(`OCR_CONFIDENCE_THRESHOLD`), 한/영 텍스트 결합 반환; 빈 결과 시 `("", 0.0)`
+- [x] T036 [P] [US3] `src/notice_solver/ocr/document.py` 구현 — `DocumentExtractor` 팩토리: `PdfExtractor`(pdfplumber), `DocxExtractor`(python-docx 단락·표), `XlsxExtractor`(openpyxl 셀값), `HwpExtractor`(subprocess LibreOffice→DOCX→DocxExtractor); `get_extractor(mime_type: str) -> BaseExtractor`; 변환 실패 시 `ExtractionError` raise
+- [x] T037 [US3] `src/notice_solver/cli/ocr.py` 구현 — `ocr_app = typer.Typer()`; `run(limit: int, type: str, retry_failed: bool)`: `status:raw`(또는 `status:ocr-failed`) 자산 Issue 조회 → 유형별 추출기 선택 → 원본 URL 다운로드(httpx) → 추출 실행 → 자산 Issue 업데이트(OCR 텍스트 + 상태 레이블); `status()`: OCR 현황 집계; 배치 실패는 개별 처리, 전체 중단 없음
+- [x] T038 [US3] `src/notice_solver/cli/main.py` 확장 — `ocr` 서브커맨드 등록 (`ocr run`, `ocr status`)
 
 **Checkpoint**: US3 독립 검증 — `status:raw` 자산 존재 시 `ocr run --limit 5 --dry-run` 정상 동작, 테스트 GREEN
 
@@ -132,11 +132,11 @@ description: "Task list for 전체 공지사항 수집 시스템"
 
 ### ⚠️ 테스트 먼저 (RED 확인 후 구현)
 
-- [ ] T039 [US4] `tests/integration/test_collect.py` 확장 — 기수집 ID 캐시 존재 시 탐색 중단 검증; `--full` 플래그 시 전체 재수집 검증; `collected: 0` 보고 시 "변경 없음" 메시지 검증
+- [x] T039 [US4] `tests/integration/test_collect.py` 확장 — 기수집 ID 캐시 존재 시 탐색 중단 검증; `--full` 플래그 시 전체 재수집 검증; `collected: 0` 보고 시 "변경 없음" 메시지 검증
 
 ### US4 구현
 
-- [ ] T040 [US4] `src/notice_solver/crawlers/hoseo.py` 확장 — `crawl_incremental(full: bool)`: `full=False`(기본) 시 목록 탐색 중 `NoticeIndex.exists(id)` 확인, 기수집 ID 발견 시 해당 페이지 이후 중단; `full=True` 시 전 페이지 탐색; `--limit` 옵션 적용
+- [x] T040 [US4] `src/notice_solver/crawlers/hoseo.py` 확장 — `crawl_incremental(full: bool)`: `full=False`(기본) 시 목록 탐색 중 `NoticeIndex.exists(id)` 확인, 기수집 ID 발견 시 해당 페이지 이후 중단; `full=True` 시 전 페이지 탐색; `--limit` 옵션 적용
 
 **Checkpoint**: US4 독립 검증 — 증분 수집 정상 동작, 테스트 GREEN
 
@@ -149,12 +149,12 @@ description: "Task list for 전체 공지사항 수집 시스템"
 
 ### ⚠️ 테스트 먼저 (RED 확인 후 구현)
 
-- [ ] T041 [US5] `tests/contract/test_cli.py` 확장 — `status` 명령 출력 형식 검증: 공지 현황(phase별), 자산 현황(status별), 마지막 실행 시각
+- [x] T041 [US5] `tests/contract/test_cli.py` 확장 — `status` 명령 출력 형식 검증: 공지 현황(phase별), 자산 현황(status별), 마지막 실행 시각
 
 ### US5 구현
 
-- [ ] T042 [US5] `src/notice_solver/cli/status.py` 구현 — `status(board: str)`: GitHub Issues API로 `phase:collection`, `phase:organization` 각각 조회, `type:asset`별 `status:raw/ocr-complete/ocr-failed/no-text` 집계, `.cache/runs/` 최근 실행 기록 조회, 포맷된 현황 테이블 출력
-- [ ] T043 [US5] `src/notice_solver/cli/main.py` 확장 — `status` 서브커맨드 등록
+- [x] T042 [US5] `src/notice_solver/cli/status.py` 구현 — `status(board: str)`: GitHub Issues API로 `phase:collection`, `phase:organization` 각각 조회, `type:asset`별 `status:raw/ocr-complete/ocr-failed/no-text` 집계, `.cache/runs/` 최근 실행 기록 조회, 포맷된 현황 테이블 출력
+- [x] T043 [US5] `src/notice_solver/cli/main.py` 확장 — `status` 서브커맨드 등록
 
 **Checkpoint**: US5 독립 검증 — `notice-solver status` 현황 출력 확인, 테스트 GREEN
 
@@ -167,11 +167,11 @@ description: "Task list for 전체 공지사항 수집 시스템"
 
 ### ⚠️ 테스트 먼저 (RED 확인 후 구현)
 
-- [ ] T044 [US6] `tests/unit/test_crawl_run.py` 작성 — `CrawlRun.report()` 출력 형식, `to_json()` 직렬화, 파일 저장 및 로드
+- [x] T044 [US6] `tests/unit/test_crawl_run.py` 작성 — `CrawlRun.report()` 출력 형식, `to_json()` 직렬화, 파일 저장 및 로드
 
 ### US6 구현
 
-- [ ] T045 [US6] `src/notice_solver/models/crawl_run.py` 확장 — `save(cache_dir)`: `.cache/runs/{run_id}.json` 저장; `load_latest(cache_dir, pipeline)`: 최근 실행 기록 로드; 각 CLI 명령(collect, assets, ocr) 완료 시 `CrawlRun` 저장 연동
+- [x] T045 [US6] `src/notice_solver/models/crawl_run.py` 확장 — `save(cache_dir)`: `.cache/runs/{run_id}.json` 저장; `load_latest(cache_dir, pipeline)`: 최근 실행 기록 로드; 각 CLI 명령(collect, assets, ocr) 완료 시 `CrawlRun` 저장 연동
 
 **Checkpoint**: US6 독립 검증 — 각 파이프라인 완료 후 통계 출력·파일 저장 확인
 
@@ -181,9 +181,9 @@ description: "Task list for 전체 공지사항 수집 시스템"
 
 **Purpose**: 전체 스토리에 걸친 품질 개선
 
-- [ ] T046 [P] `src/notice_solver/github/labels.py` 전체 레이블 초기화 명령 추가 — `notice-solver init-labels` 서브커맨드: 저장소에 모든 레이블(`LABEL_DEFINITIONS`) 일괄 생성
-- [ ] T047 [P] `.env.example` 최종 검토 및 `README.md` 작성 — 설치·설정·사용법·GitHub Actions 설명 포함
-- [ ] T048 [P] `tests/contract/test_cli.py` 전체 CLI 계약 검증 완성 — 모든 명령(collect, assets, ocr, status)의 `--help` 출력, 종료코드, 필수 환경변수 누락 동작
+- [x] T046 [P] `src/notice_solver/github/labels.py` 전체 레이블 초기화 명령 추가 — `notice-solver init-labels` 서브커맨드: 저장소에 모든 레이블(`LABEL_DEFINITIONS`) 일괄 생성
+- [x] T047 [P] `.env.example` 최종 검토 및 `README.md` 작성 — 설치·설정·사용법·GitHub Actions 설명 포함
+- [x] T048 [P] `tests/contract/test_cli.py` 전체 CLI 계약 검증 완성 — 모든 명령(collect, assets, ocr, status)의 `--help` 출력, 종료코드, 필수 환경변수 누락 동작
 - [ ] T049 `quickstart.md` 검증 — `uv sync && uv run notice-solver --help` 실제 실행 후 출력 확인, 필요 시 quickstart.md 업데이트
 - [ ] T050 [P] GitHub Actions 워크플로우 통합 확인 — `.github/workflows/collect.yml`, `assets.yml`, `ocr.yml`의 `uv sync` 단계가 `pyproject.toml` 의존성과 일치하는지 검토
 - [x] T051 [P] `src/notice_solver/cli/infer.py` 스텁 생성 및 `src/notice_solver/cli/main.py`에 `infer` 서브커맨드 등록 — `infer run TOPIC` 호출 시 "[보류] 추론 기능은 향후 별도 스펙(002-knowledge-inference)에서 구현됩니다." 출력 후 정상 종료(exit 0); 실제 LLM 구현 없음
