@@ -277,3 +277,16 @@ class TestParseNoticePage:
         assert "등록일자" not in notice.body_text
         assert "42" not in notice.body_text
         assert "실제 본문 내용입니다" in notice.body_text
+
+    def test_dl_content_label_not_in_body(self):
+        """<dl><dt>내용</dt><dd>text</dd></dl> 구조에서 '내용:' 라벨 미포함"""
+        html = """<html><body><div class="board-view">
+        <h5>공지 제목</h5>
+        <strong>작성자</strong>홍보팀
+        <strong>조회수</strong>436
+        <dl><dt>내용</dt><dd>신청서 제출 이메일: test@example.com</dd></dl>
+        </div></body></html>"""
+        notice = parse_notice_page(html, board_id="MAPP_TEST", source_id="12345")
+        assert "436" not in notice.body_text
+        assert "내용" not in notice.body_text
+        assert "신청서 제출 이메일: test@example.com" in notice.body_text

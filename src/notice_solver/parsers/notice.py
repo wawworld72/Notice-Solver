@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timezone
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 
 from notice_solver.models.notice import Notice
 from notice_solver.parsers.assets import extract_attachment_refs, extract_image_urls
@@ -165,6 +165,9 @@ def _strip_js_nav(el: BeautifulSoup) -> None:
             if parent and parent.name == "tr":
                 parent.decompose()
             else:
+                sib = tag.next_sibling
+                if sib and isinstance(sib, NavigableString) and sib.strip():
+                    sib.extract()
                 tag.decompose()
     # JS 전용 단독 링크 제거
     for a in list(el.find_all("a")):
@@ -180,10 +183,18 @@ _META_LABELS = frozenset((
 ))
 
 
+def _strip_dl_wrappers(el: BeautifulSoup) -> None:
+    """<dl><dt>내용</dt><dd>text</dd></dl> → <p>text</p> 변환 (마크다운 정의 목록 제거)."""
+    for dl in list(el.find_all("dl")):
+        for dt in list(dl.find_all("dt")):
+            dt.decompose()
+        for dd in list(dl.find_all("dd")):
+            dd.name = "p"
+        dl.unwrap()
+
+
 def _extract_body_html(soup: BeautifulSoup) -> str:
     """공지 본문만 추출 — 제목·작성자·날짜·조회수 제외."""
-    from bs4 import NavigableString
-
     # bbsView 테이블 구조: bbs-content td 또는 colspan td
     bbs_td = soup.select_one("td.bbs-content, td.bbsContent, td.bbs_content")
     if not bbs_td:
@@ -193,6 +204,7 @@ def _extract_body_html(soup: BeautifulSoup) -> str:
     if bbs_td:
         inner = BeautifulSoup(str(bbs_td), "lxml")
         _strip_js_nav(inner)
+        _strip_dl_wrappers(inner)
         return str(inner)
 
     # h5/strong 구조: 제목 헤딩 + 메타 라벨과 이어지는 텍스트 노드 제거
@@ -208,6 +220,7 @@ def _extract_body_html(soup: BeautifulSoup) -> str:
                 sib.extract()
                 sib = next_s
             tag.decompose()
+    _strip_dl_wrappers(body_copy)
     return str(body_copy)
 
 
