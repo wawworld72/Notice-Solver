@@ -14,7 +14,7 @@ _DATE_PATTERNS = [
 ]
 
 
-def parse_notice_page(html: str, board_id: str, source_id: str) -> Notice:
+def parse_notice_page(html: str, board_id: str, source_id: str, base_url: str = "") -> Notice:
     soup = BeautifulSoup(html, "lxml")
 
     title = _extract_title(soup) or f"[공지 {source_id}]"
@@ -22,8 +22,8 @@ def parse_notice_page(html: str, board_id: str, source_id: str) -> Notice:
     published_at = _extract_date(soup)
     content_html = _extract_content_html(soup)
 
-    image_urls = extract_image_urls(str(soup), base_url="")
-    attachments = extract_attachment_refs(str(soup), base_url="")
+    image_urls = extract_image_urls(content_html, base_url=base_url)
+    attachments = extract_attachment_refs(content_html, base_url=base_url)
     body_text = html_to_markdown(content_html)
 
     return Notice(
@@ -41,6 +41,15 @@ def parse_notice_page(html: str, board_id: str, source_id: str) -> Notice:
 
 
 def _extract_title(soup: BeautifulSoup) -> str:
+    # 한국 BBS 공통 패턴: <th>제목</th> 옆 <td>
+    for th in soup.find_all("th"):
+        if th.get_text(strip=True) in ("제목", "Title", "SUBJECT", "제 목"):
+            td = th.find_next_sibling("td")
+            if td:
+                t = td.get_text(strip=True)
+                if t:
+                    return t
+
     # 다양한 한국 BBS/JSP 시스템 셀렉터 (호서대 포함)
     for selector in [
         # class 기반
@@ -110,13 +119,41 @@ def _parse_date_str(text: str) -> datetime | None:
     return None
 
 
+_NAV_STRIP = [
+    "header", "footer", "nav",
+    ".lnb", "#lnb", ".gnb", "#gnb",
+    ".left-menu", ".leftMenu", ".left_menu",
+    ".sidebar", "#sidebar",
+    ".sub-menu", ".subMenu", "#subMenu",
+    ".quick-menu", ".quickMenu",
+    ".top-area", ".topArea", "#topArea",
+    ".breadcrumb", "#breadcrumb",
+    ".banner", "#banner", "#header", "#footer",
+]
+
+
 def _extract_content_html(soup: BeautifulSoup) -> str:
     for selector in [
-        ".board-content", ".content", ".view-content",
-        "#content", ".bbs-content", "article",
+        ".board-content", ".boardContent", ".board_content",
+        ".view-content", ".viewContent", ".view_content",
+        ".bbs-content", ".bbsContent", ".bbs_content",
+        ".bbs-view", ".bbsView", ".board-view", ".boardView",
+        ".view-body", ".viewBody", ".board-body", ".boardBody",
+        "#view_content", "#viewContent", "#bbsContent",
+        "article", "main",
+        "td.content", "td.bbs-content", "td.boardContent",
+        "#content", ".content",
     ]:
         el = soup.select_one(selector)
         if el:
             return str(el)
+    # 폴백: 좌측 메뉴 등 네비게이션 요소 제거 후 body 반환
     body = soup.find("body")
-    return str(body) if body else str(soup)
+    if body:
+        body_copy = BeautifulSoup(str(body), "lxml").find("body")
+        if body_copy:
+            for sel in _NAV_STRIP:
+                for el in body_copy.select(sel):
+                    el.decompose()
+            return str(body_copy)
+    return str(soup)
