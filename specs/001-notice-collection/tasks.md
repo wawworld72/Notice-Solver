@@ -186,6 +186,7 @@ description: "Task list for 전체 공지사항 수집 시스템"
 - [ ] T048 [P] `tests/contract/test_cli.py` 전체 CLI 계약 검증 완성 — 모든 명령(collect, assets, ocr, status)의 `--help` 출력, 종료코드, 필수 환경변수 누락 동작
 - [ ] T049 `quickstart.md` 검증 — `uv sync && uv run notice-solver --help` 실제 실행 후 출력 확인, 필요 시 quickstart.md 업데이트
 - [ ] T050 [P] GitHub Actions 워크플로우 통합 확인 — `.github/workflows/collect.yml`, `assets.yml`, `ocr.yml`의 `uv sync` 단계가 `pyproject.toml` 의존성과 일치하는지 검토
+- [ ] T051 [P] `src/notice_solver/cli/infer.py` 스텁 생성 및 `src/notice_solver/cli/main.py`에 `infer` 서브커맨드 등록 — `infer run TOPIC` 호출 시 "[보류] 추론 기능은 향후 별도 스펙(002-knowledge-inference)에서 구현됩니다." 출력 후 정상 종료(exit 0); 실제 LLM 구현 없음
 
 ---
 
