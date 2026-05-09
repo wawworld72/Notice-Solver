@@ -29,11 +29,11 @@ description: "Task list for 전체 공지사항 수집 시스템"
 
 **Purpose**: Python 패키지 구조 및 기본 설정 파일 생성
 
-- [ ] T001 `pyproject.toml` 생성 — 의존성(httpx, beautifulsoup4, lxml, easyocr, pdfplumber, python-docx, openpyxl, ghapi, python-frontmatter, typer[all], pydantic-settings, tenacity), CLI entrypoint(`notice-solver = "notice_solver.cli.main:app"`), dev 의존성(pytest, pytest-asyncio, respx), hatchling 빌드 백엔드
-- [ ] T002 [P] 소스 디렉토리 구조 생성 — `src/notice_solver/{cli,crawlers,parsers,ocr,github,models,cache}/__init__.py` 전체
-- [ ] T003 [P] `tests/` 디렉토리 구조 생성 — `tests/{unit,integration,contract}/__init__.py` 전체
-- [ ] T004 [P] `.env.example` 생성 — `GITHUB_TOKEN`, `GITHUB_REPO_OWNER`, `GITHUB_REPO_NAME`, `DEFAULT_BOARD_ID`, `RETRY_COUNT=3`, `REQUEST_DELAY_SEC=1.0`, `OCR_BATCH_LIMIT=50`, `OCR_CONFIDENCE_THRESHOLD=0.5`, `LOG_DIR=./logs`, `CACHE_DIR=./.cache`
-- [ ] T005 [P] `.gitignore` 생성 — `.env`, `.cache/`, `logs/`, `__pycache__/`, `*.pyc`, `.pytest_cache/`, `dist/`, `*.egg-info/`
+- [x] T001 `pyproject.toml` 생성 — 의존성(httpx, beautifulsoup4, lxml, easyocr, pdfplumber, python-docx, openpyxl, ghapi, python-frontmatter, typer[all], pydantic-settings, tenacity), CLI entrypoint(`notice-solver = "notice_solver.cli.main:app"`), dev 의존성(pytest, pytest-asyncio, respx), hatchling 빌드 백엔드
+- [x] T002 [P] 소스 디렉토리 구조 생성 — `src/notice_solver/{cli,crawlers,parsers,ocr,github,models,cache}/__init__.py` 전체
+- [x] T003 [P] `tests/` 디렉토리 구조 생성 — `tests/{unit,integration,contract}/__init__.py` 전체
+- [x] T004 [P] `.env.example` 생성 — `GITHUB_TOKEN`, `GITHUB_REPO_OWNER`, `GITHUB_REPO_NAME`, `DEFAULT_BOARD_ID`, `RETRY_COUNT=3`, `REQUEST_DELAY_SEC=1.0`, `OCR_BATCH_LIMIT=50`, `OCR_CONFIDENCE_THRESHOLD=0.5`, `LOG_DIR=./logs`, `CACHE_DIR=./.cache`
+- [x] T005 [P] `.gitignore` 생성 — `.env`, `.cache/`, `logs/`, `__pycache__/`, `*.pyc`, `.pytest_cache/`, `dist/`, `*.egg-info/`
 
 ---
 
@@ -42,15 +42,15 @@ description: "Task list for 전체 공지사항 수집 시스템"
 **Purpose**: 모든 User Story가 공유하는 모델·캐시·GitHub 연동 레이어
 **⚠️ CRITICAL**: 이 단계 완료 전 어떤 User Story도 시작할 수 없음
 
-- [ ] T006 `src/notice_solver/config.py` 구현 — `pydantic-settings` 기반 `Settings` 클래스: github_token, github_repo_owner, github_repo_name, default_board_id, retry_count(=3), request_delay_sec(=1.0), ocr_batch_limit(=50), ocr_confidence_threshold(=0.5), log_dir, cache_dir; `.env` 자동 로딩
-- [ ] T007 [P] `src/notice_solver/models/notice.py` 구현 — `Notice` 데이터클래스: source_id, board_id, notice_id, title, body_text, source_url, published_at, crawled_at, author, image_urls(list), attachments(list[AttachmentRef]), github_issue_number, phase; `AttachmentRef` 데이터클래스: url, filename, mime_type
-- [ ] T008 [P] `src/notice_solver/models/asset.py` 구현 — `Asset` 데이터클래스: asset_id, parent_notice_id, parent_issue_number, type(Literal["image","attachment"]), sequence, total_in_notice, src_url, full_url, filename, mime_type, ocr_status(="raw"), ocr_text, ocr_confidence, ocr_processed_at, github_issue_number
-- [ ] T009 [P] `src/notice_solver/models/crawl_run.py` 구현 — `CrawlRun` 데이터클래스: run_id, pipeline, board_id, started_at, finished_at, processed, skipped, failed, errors(list[dict]); `to_json()`·`report()` 메서드 (파이프라인별 완료 통계 출력)
-- [ ] T010 `src/notice_solver/cache/index.py` 구현 — `NoticeIndex`, `AssetIndex` 클래스: JSON 파일 기반 O(1) 중복 확인; `exists(id)`, `add(id, issue_number)`, `load()`, `save()` 메서드; `.cache/notice-index.json`, `.cache/asset-index.json` 경로
-- [ ] T011 `src/notice_solver/github/frontmatter.py` 구현 — `parse_notice_meta(body: str) -> dict`, `render_notice_body(notice: Notice) -> str`, `parse_asset_meta(body: str) -> dict`, `render_asset_body(asset: Asset) -> str`; HTML 주석 블록(`<!-- NOTICE_META ... -->`) 형식
-- [ ] T012 `src/notice_solver/github/labels.py` 구현 — `LABEL_DEFINITIONS` 상수(phase:*, type:asset, asset:*, status:*, board:*, category:*, year:*, semester:*, has:* 전체 레이블 색상 포함); `ensure_labels(api, owner, repo)` — 누락된 레이블 일괄 생성
-- [ ] T013 `src/notice_solver/github/issues.py` 구현 — `GitHubIssues` 클래스: `create_notice_issue(notice)`, `update_notice_issue(number, body, labels)`, `create_asset_issue(asset)`, `update_asset_issue(number, ocr_text, status)`, `list_issues(labels, state, limit)`, `get_issue(number)`; `ghapi` 사용, rate limit 대응(429 시 자동 대기)
-- [ ] T014 `tests/conftest.py` 구현 — pytest 픽스처: `cli_runner`(typer CliRunner), `mock_settings`(테스트용 Settings), `mock_github_api`(ghapi mock), `sample_notice`(Notice 픽스처), `sample_asset`(Asset 픽스처), `tmp_cache_dir`(임시 .cache 디렉토리)
+- [x] T006 `src/notice_solver/config.py` 구현 — `pydantic-settings` 기반 `Settings` 클래스: github_token, github_repo_owner, github_repo_name, default_board_id, retry_count(=3), request_delay_sec(=1.0), ocr_batch_limit(=50), ocr_confidence_threshold(=0.5), log_dir, cache_dir; `.env` 자동 로딩
+- [x] T007 [P] `src/notice_solver/models/notice.py` 구현 — `Notice` 데이터클래스: source_id, board_id, notice_id, title, body_text, source_url, published_at, crawled_at, author, image_urls(list), attachments(list[AttachmentRef]), github_issue_number, phase; `AttachmentRef` 데이터클래스: url, filename, mime_type
+- [x] T008 [P] `src/notice_solver/models/asset.py` 구현 — `Asset` 데이터클래스: asset_id, parent_notice_id, parent_issue_number, type(Literal["image","attachment"]), sequence, total_in_notice, src_url, full_url, filename, mime_type, ocr_status(="raw"), ocr_text, ocr_confidence, ocr_processed_at, github_issue_number
+- [x] T009 [P] `src/notice_solver/models/crawl_run.py` 구현 — `CrawlRun` 데이터클래스: run_id, pipeline, board_id, started_at, finished_at, processed, skipped, failed, errors(list[dict]); `to_json()`·`report()` 메서드 (파이프라인별 완료 통계 출력)
+- [x] T010 `src/notice_solver/cache/index.py` 구현 — `NoticeIndex`, `AssetIndex` 클래스: JSON 파일 기반 O(1) 중복 확인; `exists(id)`, `add(id, issue_number)`, `load()`, `save()` 메서드; `.cache/notice-index.json`, `.cache/asset-index.json` 경로
+- [x] T011 `src/notice_solver/github/frontmatter.py` 구현 — `parse_notice_meta(body: str) -> dict`, `render_notice_body(notice: Notice) -> str`, `parse_asset_meta(body: str) -> dict`, `render_asset_body(asset: Asset) -> str`; HTML 주석 블록(`<!-- NOTICE_META ... -->`) 형식
+- [x] T012 `src/notice_solver/github/labels.py` 구현 — `LABEL_DEFINITIONS` 상수(phase:*, type:asset, asset:*, status:*, board:*, category:*, year:*, semester:*, has:* 전체 레이블 색상 포함); `ensure_labels(api, owner, repo)` — 누락된 레이블 일괄 생성
+- [x] T013 `src/notice_solver/github/issues.py` 구현 — `GitHubIssues` 클래스: `create_notice_issue(notice)`, `update_notice_issue(number, body, labels)`, `create_asset_issue(asset)`, `update_asset_issue(number, ocr_text, status)`, `list_issues(labels, state, limit)`, `get_issue(number)`; `ghapi` 사용, rate limit 대응(429 시 자동 대기)
+- [x] T014 `tests/conftest.py` 구현 — pytest 픽스처: `cli_runner`(typer CliRunner), `mock_settings`(테스트용 Settings), `mock_github_api`(ghapi mock), `sample_notice`(Notice 픽스처), `sample_asset`(Asset 픽스처), `tmp_cache_dir`(임시 .cache 디렉토리)
 
 **Checkpoint**: 공통 인프라 완료 — User Story 구현 시작 가능
 
@@ -63,21 +63,21 @@ description: "Task list for 전체 공지사항 수집 시스템"
 
 ### ⚠️ 테스트 먼저 (RED 확인 후 구현)
 
-- [ ] T015 [P] [US1] `tests/unit/test_parsers.py` 작성 — `parse_notice_html()` 테스트: 제목·본문·날짜·작성자 추출, `<img>` URL 목록 추출, 첨부 링크 추출, HTML→Markdown 변환 규칙(헤딩·굵게·링크·표·목록), `fn_viewData('ID')` 패턴 파싱
-- [ ] T016 [P] [US1] `tests/unit/test_models.py` 작성 — `Notice` 생성·필드 검증, `notice_id` 자동 생성(`{board_id}-{source_id}`), `AttachmentRef` 생성
-- [ ] T017 [P] [US1] `tests/unit/test_cache.py` 작성 — `NoticeIndex.exists()`, `add()`, `load()`, `save()` 동작, JSON 파일 영속성, 동시 접근 안전성
-- [ ] T018 [US1] `tests/integration/test_collect.py` 작성 — `respx`로 호서대 BBSList·BBSView 응답 mock; 수집 실행 시 Notice 생성 및 GitHub Issue API 호출 검증; 중복 수집 시 스킵 검증; 네트워크 오류 시 재시도 검증
-- [ ] T019 [US1] `tests/contract/test_cli.py` 작성 — `collect --help` 출력 검증, `collect --dry-run` 종료코드 0, `collect` 환경변수 누락 시 종료코드 3
+- [x] T015 [P] [US1] `tests/unit/test_parsers.py` 작성 — `parse_notice_html()` 테스트: 제목·본문·날짜·작성자 추출, `<img>` URL 목록 추출, 첨부 링크 추출, HTML→Markdown 변환 규칙(헤딩·굵게·링크·표·목록), `fn_viewData('ID')` 패턴 파싱
+- [x] T016 [P] [US1] `tests/unit/test_models.py` 작성 — `Notice` 생성·필드 검증, `notice_id` 자동 생성(`{board_id}-{source_id}`), `AttachmentRef` 생성
+- [x] T017 [P] [US1] `tests/unit/test_cache.py` 작성 — `NoticeIndex.exists()`, `add()`, `load()`, `save()` 동작, JSON 파일 영속성, 동시 접근 안전성
+- [x] T018 [US1] `tests/integration/test_collect.py` 작성 — `respx`로 호서대 BBSList·BBSView 응답 mock; 수집 실행 시 Notice 생성 및 GitHub Issue API 호출 검증; 중복 수집 시 스킵 검증; 네트워크 오류 시 재시도 검증
+- [x] T019 [US1] `tests/contract/test_cli.py` 작성 — `collect --help` 출력 검증, `collect --dry-run` 종료코드 0, `collect` 환경변수 누락 시 종료코드 3
 
 ### US1 구현
 
-- [ ] T020 [P] [US1] `src/notice_solver/parsers/markdown.py` 구현 — `html_to_markdown(html: str) -> str`: `<h1>~<h6>`, `<p>`, `<br>`, `<strong>/<b>`, `<em>/<i>`, `<a>`, `<table>`, `<ul>/<ol>/<li>` 변환 규칙; `<img>` 태그 제거(자산으로 별도 처리); `markdownify` 또는 직접 구현
-- [ ] T021 [P] [US1] `src/notice_solver/parsers/notice.py` 구현 — `parse_notice_page(html: str, board_id: str, source_id: str) -> Notice`: BeautifulSoup으로 제목·본문·날짜·작성자 파싱; `<img src>` 목록 추출; 첨부 링크(`<a href*=download>`) 추출; `parsers/markdown.py` 사용
-- [ ] T022 [P] [US1] `src/notice_solver/parsers/assets.py` 구현 — `extract_image_urls(soup) -> list[str]`: `<img>` 태그 src 추출, 썸네일 URL(`/ThumbnailPrint.do`) 감지 및 원본 URL 변환 시도(`/FileDownLoad.do`); `extract_attachment_refs(soup) -> list[AttachmentRef]`: 다운로드 링크 추출, 파일명·MIME 유형 추론
-- [ ] T023 [US1] `src/notice_solver/crawlers/base.py` 구현 — `BaseCrawler` 추상 클래스: `fetch(url) -> str`(httpx + tenacity 재시도, asyncio.sleep rate limiting), `check_robots(base_url)`, `extract_notice_ids(list_html) -> list[str]`(추상), `parse_notice(view_html, id) -> Notice`(추상); 구조화 로그 출력
-- [ ] T024 [US1] `src/notice_solver/crawlers/hoseo.py` 구현 — `HoseoCrawler(BaseCrawler)`: `BOARD_ID = "MAPP_1708240139"`, `BASE_URL`, `extract_notice_ids()` — `fn_viewData('ID')` 정규식 파싱, `parse_notice()` — `parsers/notice.py` 위임; 페이지네이션(`pageIndex=N`), 마지막 페이지 감지(`<strong>` 태그)
-- [ ] T025 [US1] `src/notice_solver/cli/collect.py` 구현 — `collect(board: str, full: bool, limit: int, dry_run: bool)` Typer 명령: `HoseoCrawler` 실행, `NoticeIndex`로 중복 확인, `GitHubIssues.create_notice_issue()`, `CrawlRun` 기록, 완료 통계 출력; `--dry-run` 시 Issue 미생성
-- [ ] T026 [US1] `src/notice_solver/cli/main.py` 구현 — `app = typer.Typer()`, `collect` 서브커맨드 등록, `--version` 옵션, 전역 설정 초기화
+- [x] T020 [P] [US1] `src/notice_solver/parsers/markdown.py` 구현 — `html_to_markdown(html: str) -> str`: `<h1>~<h6>`, `<p>`, `<br>`, `<strong>/<b>`, `<em>/<i>`, `<a>`, `<table>`, `<ul>/<ol>/<li>` 변환 규칙; `<img>` 태그 제거(자산으로 별도 처리); `markdownify` 또는 직접 구현
+- [x] T021 [P] [US1] `src/notice_solver/parsers/notice.py` 구현 — `parse_notice_page(html: str, board_id: str, source_id: str) -> Notice`: BeautifulSoup으로 제목·본문·날짜·작성자 파싱; `<img src>` 목록 추출; 첨부 링크(`<a href*=download>`) 추출; `parsers/markdown.py` 사용
+- [x] T022 [P] [US1] `src/notice_solver/parsers/assets.py` 구현 — `extract_image_urls(soup) -> list[str]`: `<img>` 태그 src 추출, 썸네일 URL(`/ThumbnailPrint.do`) 감지 및 원본 URL 변환 시도(`/FileDownLoad.do`); `extract_attachment_refs(soup) -> list[AttachmentRef]`: 다운로드 링크 추출, 파일명·MIME 유형 추론
+- [x] T023 [US1] `src/notice_solver/crawlers/base.py` 구현 — `BaseCrawler` 추상 클래스: `fetch(url) -> str`(httpx + tenacity 재시도, asyncio.sleep rate limiting), `check_robots(base_url)`, `extract_notice_ids(list_html) -> list[str]`(추상), `parse_notice(view_html, id) -> Notice`(추상); 구조화 로그 출력
+- [x] T024 [US1] `src/notice_solver/crawlers/hoseo.py` 구현 — `HoseoCrawler(BaseCrawler)`: `BOARD_ID = "MAPP_1708240139"`, `BASE_URL`, `extract_notice_ids()` — `fn_viewData('ID')` 정규식 파싱, `parse_notice()` — `parsers/notice.py` 위임; 페이지네이션(`pageIndex=N`), 마지막 페이지 감지(`<strong>` 태그)
+- [x] T025 [US1] `src/notice_solver/cli/collect.py` 구현 — `collect(board: str, full: bool, limit: int, dry_run: bool)` Typer 명령: `HoseoCrawler` 실행, `NoticeIndex`로 중복 확인, `GitHubIssues.create_notice_issue()`, `CrawlRun` 기록, 완료 통계 출력; `--dry-run` 시 Issue 미생성
+- [x] T026 [US1] `src/notice_solver/cli/main.py` 구현 — `app = typer.Typer()`, `collect` 서브커맨드 등록, `--version` 옵션, 전역 설정 초기화
 
 **Checkpoint**: US1 독립 검증 — `uv run notice-solver collect --dry-run` 정상 동작, 테스트 전체 GREEN
 
@@ -186,7 +186,7 @@ description: "Task list for 전체 공지사항 수집 시스템"
 - [ ] T048 [P] `tests/contract/test_cli.py` 전체 CLI 계약 검증 완성 — 모든 명령(collect, assets, ocr, status)의 `--help` 출력, 종료코드, 필수 환경변수 누락 동작
 - [ ] T049 `quickstart.md` 검증 — `uv sync && uv run notice-solver --help` 실제 실행 후 출력 확인, 필요 시 quickstart.md 업데이트
 - [ ] T050 [P] GitHub Actions 워크플로우 통합 확인 — `.github/workflows/collect.yml`, `assets.yml`, `ocr.yml`의 `uv sync` 단계가 `pyproject.toml` 의존성과 일치하는지 검토
-- [ ] T051 [P] `src/notice_solver/cli/infer.py` 스텁 생성 및 `src/notice_solver/cli/main.py`에 `infer` 서브커맨드 등록 — `infer run TOPIC` 호출 시 "[보류] 추론 기능은 향후 별도 스펙(002-knowledge-inference)에서 구현됩니다." 출력 후 정상 종료(exit 0); 실제 LLM 구현 없음
+- [x] T051 [P] `src/notice_solver/cli/infer.py` 스텁 생성 및 `src/notice_solver/cli/main.py`에 `infer` 서브커맨드 등록 — `infer run TOPIC` 호출 시 "[보류] 추론 기능은 향후 별도 스펙(002-knowledge-inference)에서 구현됩니다." 출력 후 정상 종료(exit 0); 실제 LLM 구현 없음
 
 ---
 
