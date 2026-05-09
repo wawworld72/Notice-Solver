@@ -136,9 +136,16 @@ class GitHubIssues:
         import re as _re
         from notice_solver.github.frontmatter import parse_notice_meta
         _URL_RE = _re.compile(r"action=(MAPP_\w+)(?:&amp;|&)schIdx=(\d+)")
-        issues = self.list_issues(labels="type:notice", state="open", limit=5000)
+
+        # type:notice + phase:collection + phase:organization 모두 조회 후 합산
+        # (GitHub 라벨 검색 인덱스 지연 대응)
+        seen: dict[int, dict] = {}
+        for labels in ("type:notice", "phase:collection", "phase:organization"):
+            for issue in self.list_issues(labels=labels, state="open", limit=5000):
+                seen[issue["number"]] = issue
+
         result: dict[str, int] = {}
-        for issue in issues:
+        for issue in seen.values():
             body = issue.get("body") or ""
             meta = parse_notice_meta(body)
             notice_id = meta.get("id")
