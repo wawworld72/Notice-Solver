@@ -227,6 +227,16 @@ class TestParseNoticePage:
         assert "fn_selectCategory" not in notice.body_text
         assert "공지사항" not in notice.body_text
 
+    def test_view_count_not_in_body(self):
+        """조회수 표시가 본문에 포함되지 않아야 함"""
+        html = """<html><body><div class="board-view">
+        <h5>공지 제목</h5>
+        <strong>조회수</strong>42
+        <p>본문 내용</p>
+        </div></body></html>"""
+        notice = parse_notice_page(html, board_id="MAPP_TEST", source_id="12345")
+        assert "조회수" not in notice.body_text
+
     def test_icon_images_excluded(self):
         """파일형식 아이콘 이미지가 자산 목록에서 제외되어야 함"""
         html = """<html><body><div class="board-view">

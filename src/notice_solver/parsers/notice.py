@@ -146,12 +146,25 @@ _NAV_STRIP = [
 
 
 def _strip_js_nav(el: BeautifulSoup) -> None:
-    """카테고리 선택/PRINT 등 JS 전용 네비게이션 링크 in-place 제거."""
+    """카테고리 선택/PRINT/조회수 등 UI 전용 요소 in-place 제거."""
     # fn_selectCategory 링크만 있는 <ul>/<ol> 제거
     for ul in list(el.find_all(["ul", "ol"])):
         links = ul.find_all("a")
         if links and all(_JS_NAV_RE.search(a.get("href") or "") for a in links):
             ul.decompose()
+    # JS 전용 단독 링크 제거 (fn_print, fn_selectCategory, fn_fileView)
+    for a in list(el.find_all("a")):
+        href = a.get("href") or ""
+        if _JS_NAV_RE.search(href):
+            a.decompose()
+    # 조회수 표시 제거 (<strong>조회수</strong> 또는 <th>조회수</th> 행)
+    for tag in list(el.find_all(["strong", "b", "th"])):
+        if tag.get_text(strip=True) in ("조회수", "조 회 수", "Views", "Hit", "Hits"):
+            parent = tag.parent
+            if parent and parent.name == "tr":
+                parent.decompose()
+            else:
+                tag.decompose()
     # JS 전용 단독 링크 제거
     for a in list(el.find_all("a")):
         href = a.get("href") or ""

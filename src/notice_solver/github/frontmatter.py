@@ -32,7 +32,7 @@ def parse_asset_meta(body: str) -> dict:
 
 def render_notice_body(notice: Notice) -> str:
     image_lines = "\n".join(
-        f"![이미지 {i+1}]({url})" for i, url in enumerate(notice.image_urls)
+        f"- [이미지 {i+1}]({url})" for i, url in enumerate(notice.image_urls)
     ) or "_없음_"
     attach_lines = "\n".join(
         f"- attach-{i+1:03d}: `{a.url}` | `{a.filename}` | `{a.mime_type}`"
@@ -43,19 +43,23 @@ def render_notice_body(notice: Notice) -> str:
     crawled = notice.crawled_at.isoformat() if isinstance(notice.crawled_at, datetime) else str(notice.crawled_at)
     year = notice.published_at.year if isinstance(notice.published_at, datetime) else ""
 
-    meta_yaml = (
-        f"id: {notice.notice_id}\n"
-        f"board_id: {notice.board_id}\n"
-        f"title: {notice.title}\n"
-        f"author: {notice.author}\n"
-        f"published_at: {published}\n"
-        f"crawled_at: {crawled}\n"
-        f"source_url: {notice.source_url}\n"
-        f"year: {year}\n"
-        f"image_count: {len(notice.image_urls)}\n"
-        f"attachment_count: {len(notice.attachments)}\n"
-        f"phase: {notice.phase}"
-    )
+    meta_dict = {
+        "id": notice.notice_id,
+        "board_id": notice.board_id,
+        "title": notice.title,
+        "author": notice.author,
+        "published_at": published,
+        "crawled_at": crawled,
+        "source_url": notice.source_url,
+        "year": year,
+        "image_urls": notice.image_urls,
+        "attachments": [
+            {"url": a.url, "filename": a.filename, "mime_type": a.mime_type}
+            for a in notice.attachments
+        ],
+        "phase": notice.phase,
+    }
+    meta_yaml = yaml.safe_dump(meta_dict, allow_unicode=True, default_flow_style=False).rstrip()
 
     return (
         f"<!-- NOTICE_META\n{meta_yaml}\n-->\n\n"

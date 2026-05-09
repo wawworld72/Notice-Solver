@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import typer
 
 from notice_solver.github.frontmatter import parse_notice_meta
-from notice_solver.parsers.assets import extract_image_urls, extract_attachment_refs
+from notice_solver.models.notice import AttachmentRef
 
 assets_app = typer.Typer(help="자산 Issue 관리")
 
@@ -49,8 +49,13 @@ def create(
         notice_id = meta.get("id", "")
         issue_number = issue["number"]
 
-        image_urls = extract_image_urls(body)
-        attachment_refs = extract_attachment_refs(body)
+        # NOTICE_META에서 URL 목록 직접 읽기 (body는 마크다운이라 HTML 파서 사용 불가)
+        image_urls = meta.get("image_urls") or []
+        attachment_refs = [
+            AttachmentRef(url=a["url"], filename=a.get("filename", ""), mime_type=a.get("mime_type", ""))
+            for a in (meta.get("attachments") or [])
+            if isinstance(a, dict) and a.get("url")
+        ]
 
         if not image_urls and not attachment_refs:
             typer.echo(f"[처리] 공지 #{issue_number} → 자산 없음 (has:no-assets)")
