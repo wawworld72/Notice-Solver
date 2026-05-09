@@ -13,14 +13,19 @@ _DATE_PATTERNS = [
     r"\d{4}/\d{2}/\d{2}",
 ]
 
+_JS_NAV_RE = re.compile(r"javascript:fn_(selectCategory|print)\(")
+
 
 def parse_notice_page(html: str, board_id: str, source_id: str, base_url: str = "") -> Notice:
     soup = BeautifulSoup(html, "lxml")
 
-    title = _extract_title(soup) or f"[공지 {source_id}]"
-    author = _extract_author(soup)
-    published_at = _extract_date(soup)
+    # 본문 먼저 추출 → 네비게이션과 분리된 컨텍스트에서 메타 파싱
     content_html = _extract_content_html(soup)
+    content_soup = BeautifulSoup(content_html, "lxml")
+
+    title = _extract_title(content_soup) or f"[공지 {source_id}]"
+    author = _extract_author(content_soup)
+    published_at = _extract_date(content_soup)
 
     image_urls = extract_image_urls(content_html, base_url=base_url)
     attachments = extract_attachment_refs(content_html, base_url=base_url)
@@ -41,7 +46,7 @@ def parse_notice_page(html: str, board_id: str, source_id: str, base_url: str = 
 
 
 def _extract_title(soup: BeautifulSoup) -> str:
-    # 한국 BBS 공통 패턴: <th>제목</th> 옆 <td>
+    # 한국 BBS: <th>제목</th> → sibling <td>
     for th in soup.find_all("th"):
         if th.get_text(strip=True) in ("제목", "Title", "SUBJECT", "제 목"):
             td = th.find_next_sibling("td")
@@ -50,29 +55,22 @@ def _extract_title(soup: BeautifulSoup) -> str:
                 if t:
                     return t
 
-    # 다양한 한국 BBS/JSP 시스템 셀렉터 (호서대 포함)
     for selector in [
-        # class 기반
         ".board-title", ".boardTitle", ".view-title", ".viewTitle",
         ".view_title", ".viewSubject", ".view_subject",
         ".subject", ".bbs-title", ".bbs_title",
         ".notice-title", ".noticeTitle",
-        # id 기반
         "#subject", "#title", "#viewTitle",
-        # heading 기반
         "h1.subject", "h2.subject", "h3.subject",
         "h1.title", "h2.title",
-        "h1", "h2",
-        # table 기반 (한국 BBS 다수)
+        "h1", "h2", "h3", "h4", "h5",
         "td.subject", "th.subject", "td.title", "th.title",
         "table.bbsView td.subject", "table.view td.subject",
-        # HTML title 태그
         "title",
     ]:
         el = soup.select_one(selector)
         if el:
             text = el.get_text(strip=True)
-            # <title> 태그는 사이트명 포함 경우가 많아 일부만 사용
             if selector == "title" and " - " in text:
                 text = text.split(" - ")[0].strip()
             if text:
@@ -81,6 +79,21 @@ def _extract_title(soup: BeautifulSoup) -> str:
 
 
 def _extract_author(soup: BeautifulSoup) -> str:
+    # 호서대 패턴: <strong>작성자</strong> 또는 <th>작성자</th>
+    for tag in soup.find_all(["strong", "b", "th"]):
+        if tag.get_text(strip=True) in ("작성자", "Writer", "작 성 자"):
+            if tag.name == "th":
+                td = tag.find_next_sibling("td")
+                if td:
+                    t = td.get_text(strip=True)
+                    if t:
+                        return t
+            else:
+                for sib in tag.next_siblings:
+                    t = sib.get_text(strip=True) if hasattr(sib, "get_text") else str(sib).strip()
+                    if t:
+                        return t
+
     for selector in [
         ".author", ".writer", "[class*='author']", "[class*='writer']",
         "td.writer", "span.writer",
@@ -132,28 +145,47 @@ _NAV_STRIP = [
 ]
 
 
+def _strip_js_nav(el: BeautifulSoup) -> None:
+    """카테고리 선택/PRINT 등 JS 전용 네비게이션 링크 in-place 제거."""
+    # fn_selectCategory 링크만 있는 <ul>/<ol> 제거
+    for ul in list(el.find_all(["ul", "ol"])):
+        links = ul.find_all("a")
+        if links and all(_JS_NAV_RE.search(a.get("href") or "") for a in links):
+            ul.decompose()
+    # JS 전용 단독 링크 제거
+    for a in list(el.find_all("a")):
+        href = a.get("href") or ""
+        if _JS_NAV_RE.search(href):
+            a.decompose()
+
+
 def _extract_content_html(soup: BeautifulSoup) -> str:
     for selector in [
+        # 넓은 컨테이너 우선 (title 테이블 행 포함)
+        ".bbs-view", ".bbsView", ".board-view", ".boardView",
         ".board-content", ".boardContent", ".board_content",
         ".view-content", ".viewContent", ".view_content",
-        ".bbs-content", ".bbsContent", ".bbs_content",
-        ".bbs-view", ".bbsView", ".board-view", ".boardView",
         ".view-body", ".viewBody", ".board-body", ".boardBody",
         "#view_content", "#viewContent", "#bbsContent",
         "article", "main",
-        "td.content", "td.bbs-content", "td.boardContent",
         "#content", ".content",
+        # 테이블 셀은 마지막 (좁은 범위)
+        ".bbs-content", ".bbsContent", ".bbs_content",
+        "td.content", "td.bbs-content", "td.boardContent",
     ]:
         el = soup.select_one(selector)
         if el:
-            return str(el)
+            target = BeautifulSoup(str(el), "lxml")
+            _strip_js_nav(target)
+            return str(target)
     # 폴백: 좌측 메뉴 등 네비게이션 요소 제거 후 body 반환
     body = soup.find("body")
     if body:
         body_copy = BeautifulSoup(str(body), "lxml").find("body")
         if body_copy:
             for sel in _NAV_STRIP:
-                for el in body_copy.select(sel):
-                    el.decompose()
+                for nav_el in body_copy.select(sel):
+                    nav_el.decompose()
+            _strip_js_nav(body_copy)
             return str(body_copy)
     return str(soup)

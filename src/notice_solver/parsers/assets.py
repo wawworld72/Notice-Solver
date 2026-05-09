@@ -19,6 +19,18 @@ _MIME_MAP = {
     ".zip": "application/zip",
 }
 
+# 파일형식 아이콘 등 UI 전용 이미지 제외 패턴
+_ICON_URL_RE = re.compile(
+    r"/resources/images/icon/|"
+    r"/images/ico/|"
+    r"icon_\w+\.(png|gif|svg)|"
+    r"/static/images/btn|"
+    r"/common/images/|"
+    r"/skin/|"
+    r"/_img/",
+    re.IGNORECASE,
+)
+
 
 def extract_image_urls(html: str, base_url: str = "") -> list[str]:
     if not html:
@@ -31,8 +43,11 @@ def extract_image_urls(html: str, base_url: str = "") -> list[str]:
             continue
         if base_url and not src.startswith("http"):
             src = urljoin(base_url, src)
-        if src.startswith("http"):
-            urls.append(src)
+        if not src.startswith("http"):
+            continue
+        if _ICON_URL_RE.search(src):
+            continue
+        urls.append(src)
     return urls
 
 

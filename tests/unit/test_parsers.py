@@ -177,6 +177,28 @@ class TestParseNoticePage:
         notice = parse_notice_page(self.HOSEO_HTML, board_id="MAPP_TEST", source_id="99999")
         assert notice.title == "2026학년도 1학기 수강신청 안내"
 
+    def test_hoseo_h5_title_extracted(self):
+        """<h5> 태그 안의 제목 추출 (호서대 실제 구조)"""
+        html = """<html><body>
+        <div class="lnb"><ul><li>공지사항</li></ul></div>
+        <div class="board-view">
+          <h5>[충남산학융합원] 미래내일 일경험(인턴형) 참여 청년 모집</h5>
+          <strong>작성자</strong>취업팀
+          <p>본문 내용</p>
+        </div></body></html>"""
+        notice = parse_notice_page(html, board_id="MAPP_TEST", source_id="12345")
+        assert "[충남산학융합원]" in notice.title
+        assert notice.title != "공지사항"
+
+    def test_hoseo_author_strong_pattern(self):
+        """<strong>작성자</strong> 다음 텍스트 작성자 추출"""
+        html = """<html><body><div class="board-view">
+        <h5>제목입니다</h5>
+        <strong>작성자</strong>취업팀
+        </div></body></html>"""
+        notice = parse_notice_page(html, board_id="MAPP_TEST", source_id="12345")
+        assert notice.author == "취업팀"
+
     def test_hoseo_relative_image_resolved(self):
         """상대경로 이미지가 base_url로 절대경로 변환"""
         notice = parse_notice_page(
@@ -190,6 +212,32 @@ class TestParseNoticePage:
         """좌측 네비게이션 메뉴가 본문에 포함되지 않아야 함"""
         notice = parse_notice_page(self.HOSEO_HTML, board_id="MAPP_TEST", source_id="99999")
         assert "ICAN+학기제" not in notice.body_text
+
+    def test_hoseo_js_nav_not_in_body(self):
+        """fn_selectCategory JS 링크 목록이 본문에 포함되지 않아야 함"""
+        html = """<html><body><div class="board-view">
+        <ul>
+          <li><a href="javascript:fn_selectCategory('CTG_001')">공지사항</a></li>
+          <li><a href="javascript:fn_selectCategory('CTG_002')">학사공지</a></li>
+        </ul>
+        <h5>실제 공지 제목</h5>
+        <p>본문 내용</p>
+        </div></body></html>"""
+        notice = parse_notice_page(html, board_id="MAPP_TEST", source_id="12345")
+        assert "fn_selectCategory" not in notice.body_text
+        assert "공지사항" not in notice.body_text
+
+    def test_icon_images_excluded(self):
+        """파일형식 아이콘 이미지가 자산 목록에서 제외되어야 함"""
+        html = """<html><body><div class="board-view">
+        <img src="https://www.hoseo.ac.kr/resources/images/icon/icon_jpg.png">
+        <img src="https://www.hoseo.ac.kr/resources/images/icon/icon_hwp.png">
+        <img src="https://www.hoseo.ac.kr/ThumbnailPrint.do?dir=editor&savename=actual.jpg">
+        </div></body></html>"""
+        notice = parse_notice_page(html, board_id="MAPP_TEST", source_id="12345",
+                                   base_url="https://www.hoseo.ac.kr")
+        assert all("icon_jpg" not in url and "icon_hwp" not in url for url in notice.image_urls)
+        assert any("ThumbnailPrint" in url for url in notice.image_urls)
 
     def test_hoseo_relative_attachment_resolved(self):
         """상대경로 첨부파일이 base_url로 절대경로 변환"""
