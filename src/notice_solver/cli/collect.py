@@ -51,12 +51,13 @@ def register(app: typer.Typer) -> None:
         if not dry_run:
             typer.echo(f"[{_now()}] GitHub Issues에서 기수집 목록 조회 중...")
             gh_known = gh.get_known_notice_ids()
+            typer.echo(f"[{_now()}] GitHub Issues 확인: {len(gh_known)}건 / 로컬 캐시: {len(index)}건")
             for nid, inum in gh_known.items():
                 if not index.exists(nid):
                     index._data[nid] = inum
             if gh_known:
                 index.save()
-            typer.echo(f"[{_now()}] 기수집: {len(index)}건")
+            typer.echo(f"[{_now()}] 기수집 합계: {len(index)}건")
 
         known_ids = set(_read_index_keys(index))
 
