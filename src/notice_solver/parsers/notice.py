@@ -17,7 +17,7 @@ _DATE_PATTERNS = [
 def parse_notice_page(html: str, board_id: str, source_id: str) -> Notice:
     soup = BeautifulSoup(html, "lxml")
 
-    title = _extract_title(soup)
+    title = _extract_title(soup) or f"[공지 {source_id}]"
     author = _extract_author(soup)
     published_at = _extract_date(soup)
     content_html = _extract_content_html(soup)
@@ -41,13 +41,33 @@ def parse_notice_page(html: str, board_id: str, source_id: str) -> Notice:
 
 
 def _extract_title(soup: BeautifulSoup) -> str:
+    # 다양한 한국 BBS/JSP 시스템 셀렉터 (호서대 포함)
     for selector in [
-        "h1.board-title", "h2.board-title", ".board-title",
-        "h1.subject", ".subject", "h1", "title",
+        # class 기반
+        ".board-title", ".boardTitle", ".view-title", ".viewTitle",
+        ".view_title", ".viewSubject", ".view_subject",
+        ".subject", ".bbs-title", ".bbs_title",
+        ".notice-title", ".noticeTitle",
+        # id 기반
+        "#subject", "#title", "#viewTitle",
+        # heading 기반
+        "h1.subject", "h2.subject", "h3.subject",
+        "h1.title", "h2.title",
+        "h1", "h2",
+        # table 기반 (한국 BBS 다수)
+        "td.subject", "th.subject", "td.title", "th.title",
+        "table.bbsView td.subject", "table.view td.subject",
+        # HTML title 태그
+        "title",
     ]:
         el = soup.select_one(selector)
         if el:
-            return el.get_text(strip=True)
+            text = el.get_text(strip=True)
+            # <title> 태그는 사이트명 포함 경우가 많아 일부만 사용
+            if selector == "title" and " - " in text:
+                text = text.split(" - ")[0].strip()
+            if text:
+                return text
     return ""
 
 
