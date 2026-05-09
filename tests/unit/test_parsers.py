@@ -257,3 +257,23 @@ class TestParseNoticePage:
         )
         assert len(notice.attachments) >= 1
         assert any("hoseo.ac.kr" in a.url for a in notice.attachments)
+
+    def test_title_not_in_body_text(self):
+        """공지 제목이 본문에 포함되지 않아야 함 (이슈 제목으로 이미 제공)"""
+        notice = parse_notice_page(self.HOSEO_HTML, board_id="MAPP_TEST", source_id="99999")
+        assert "2026학년도 1학기 수강신청 안내" not in notice.body_text
+
+    def test_author_date_not_in_body_text(self):
+        """작성자·등록일자가 본문에 포함되지 않아야 함"""
+        html = """<html><body><div class="board-view">
+        <h5>공지 제목</h5>
+        <strong>작성자</strong>교학처
+        <strong>등록일자</strong>2026-03-01
+        <strong>조회수</strong>42
+        <p>실제 본문 내용입니다.</p>
+        </div></body></html>"""
+        notice = parse_notice_page(html, board_id="MAPP_TEST", source_id="12345")
+        assert "교학처" not in notice.body_text
+        assert "등록일자" not in notice.body_text
+        assert "42" not in notice.body_text
+        assert "실제 본문 내용입니다" in notice.body_text

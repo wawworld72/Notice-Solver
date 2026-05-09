@@ -133,12 +133,19 @@ class GitHubIssues:
 
     def get_known_notice_ids(self) -> dict[str, int]:
         """GitHub Issues에서 기수집 공지 ID 목록을 반환한다. {notice_id: issue_number}"""
+        import re as _re
         from notice_solver.github.frontmatter import parse_notice_meta
+        _URL_RE = _re.compile(r"action=(MAPP_\w+)(?:&amp;|&)schIdx=(\d+)")
         issues = self.list_issues(labels="type:notice", state="open", limit=5000)
         result: dict[str, int] = {}
         for issue in issues:
-            meta = parse_notice_meta(issue.get("body") or "")
+            body = issue.get("body") or ""
+            meta = parse_notice_meta(body)
             notice_id = meta.get("id")
+            if not notice_id:
+                m = _URL_RE.search(body)
+                if m:
+                    notice_id = f"{m.group(1)}-{m.group(2)}"
             if notice_id:
                 result[notice_id] = issue["number"]
         return result
