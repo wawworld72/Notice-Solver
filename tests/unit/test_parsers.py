@@ -123,6 +123,27 @@ class TestParseNoticePage:
     </body></html>
     """
 
+    # 호서대 실제 BBSView 구조: table 기반 제목, 상대경로 이미지, lnb 네비게이션
+    HOSEO_HTML = """
+    <html><body>
+    <div class="lnb">
+      <ul><li>공지사항</li><li>ICAN+학기제</li><li>학사공지</li></ul>
+    </div>
+    <div class="board-view">
+      <table class="bbsView">
+        <tr><th>제목</th><td>2026학년도 1학기 수강신청 안내</td></tr>
+        <tr><th>작성자</th><td>교학처</td></tr>
+        <tr><th>등록일</th><td class="date">2026-03-01</td></tr>
+        <tr><td colspan="2" class="bbs-content">
+          <p>수강신청 기간 안내입니다.</p>
+          <img src="/ThumbnailPrint.do?dir=editor&savename=notice.jpg">
+          <a href="/download/guide.pdf">수강신청안내.pdf</a>
+        </td></tr>
+      </table>
+    </div>
+    </body></html>
+    """
+
     def test_returns_notice(self):
         from notice_solver.models.notice import Notice
         notice = parse_notice_page(self.SAMPLE_HTML, board_id="MAPP_TEST", source_id="12345")
@@ -150,3 +171,31 @@ class TestParseNoticePage:
     def test_img_not_in_body_text(self):
         notice = parse_notice_page(self.SAMPLE_HTML, board_id="MAPP_TEST", source_id="12345")
         assert "<img" not in notice.body_text
+
+    def test_hoseo_table_title_extracted(self):
+        """<th>제목</th><td>...</td> 패턴 제목 추출"""
+        notice = parse_notice_page(self.HOSEO_HTML, board_id="MAPP_TEST", source_id="99999")
+        assert notice.title == "2026학년도 1학기 수강신청 안내"
+
+    def test_hoseo_relative_image_resolved(self):
+        """상대경로 이미지가 base_url로 절대경로 변환"""
+        notice = parse_notice_page(
+            self.HOSEO_HTML, board_id="MAPP_TEST", source_id="99999",
+            base_url="https://www.hoseo.ac.kr"
+        )
+        assert len(notice.image_urls) >= 1
+        assert any("hoseo.ac.kr" in url for url in notice.image_urls)
+
+    def test_hoseo_nav_not_in_body(self):
+        """좌측 네비게이션 메뉴가 본문에 포함되지 않아야 함"""
+        notice = parse_notice_page(self.HOSEO_HTML, board_id="MAPP_TEST", source_id="99999")
+        assert "ICAN+학기제" not in notice.body_text
+
+    def test_hoseo_relative_attachment_resolved(self):
+        """상대경로 첨부파일이 base_url로 절대경로 변환"""
+        notice = parse_notice_page(
+            self.HOSEO_HTML, board_id="MAPP_TEST", source_id="99999",
+            base_url="https://www.hoseo.ac.kr"
+        )
+        assert len(notice.attachments) >= 1
+        assert any("hoseo.ac.kr" in a.url for a in notice.attachments)

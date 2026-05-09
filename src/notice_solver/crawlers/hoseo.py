@@ -24,7 +24,7 @@ class HoseoCrawler(BaseCrawler):
         return _FN_VIEW_RE.findall(list_html)
 
     def parse_notice(self, view_html: str, source_id: str) -> Notice:
-        notice = parse_notice_page(view_html, board_id=BOARD_ID, source_id=source_id)
+        notice = parse_notice_page(view_html, board_id=BOARD_ID, source_id=source_id, base_url=BASE_URL)
         notice.source_url = f"{VIEW_URL}?action={BOARD_ID}&schIdx={source_id}"
         return notice
 
