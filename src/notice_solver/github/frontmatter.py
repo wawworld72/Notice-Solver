@@ -32,7 +32,7 @@ def parse_asset_meta(body: str) -> dict:
 
 def render_notice_body(notice: Notice) -> str:
     image_lines = "\n".join(
-        f"![이미지 {i+1}]({url})" for i, url in enumerate(notice.image_urls)
+        f"- [이미지 {i+1}]({url})" for i, url in enumerate(notice.image_urls)
     ) or "_없음_"
     attach_lines = "\n".join(
         f"- attach-{i+1:03d}: `{a.url}` | `{a.filename}` | `{a.mime_type}`"
