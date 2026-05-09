@@ -17,6 +17,9 @@ class GitHubIssues:
     def create_notice_issue(self, notice: Notice) -> int:
         body = render_notice_body(notice)
         labels = self._notice_labels(notice)
+        for label in labels:
+            if label.startswith("author:"):
+                self._ensure_label(label, color="c5def5", description=f"작성자: {label[7:]}")
         issue = self._api.issues.create(
             owner=self._owner,
             repo=self._repo,
@@ -148,7 +151,21 @@ class GitHubIssues:
             labels.append("has:no-assets")
         if isinstance(notice.published_at, datetime):
             labels.append(f"year:{notice.published_at.year}")
+        if notice.author:
+            labels.append(f"author:{notice.author}")
         return labels
+
+    def _ensure_label(self, name: str, color: str = "ededed", description: str = "") -> None:
+        try:
+            self._api.issues.get_label(owner=self._owner, repo=self._repo, name=name)
+        except Exception:
+            try:
+                self._api.issues.create_label(
+                    owner=self._owner, repo=self._repo,
+                    name=name, color=color, description=description,
+                )
+            except Exception:
+                pass
 
     def _with_retry(self, fn, *args, **kwargs):
         for attempt in range(3):
