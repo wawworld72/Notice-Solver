@@ -1,0 +1,54 @@
+name: Phase 2 - 자산 Issue 생성
+
+on:
+  # Phase 1 완료 시 자동 실행
+  workflow_run:
+    workflows: ["Phase 1 - 공지 수집"]
+    types: [completed]
+  # 수동 실행
+  workflow_dispatch:
+    inputs:
+      notice_number:
+        description: '특정 공지 Issue 번호 (빈 값=전체)'
+        default: ''
+      limit:
+        description: '처리할 최대 공지 수'
+        default: '100'
+
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Phase 1이 성공한 경우 또는 수동 실행인 경우만 실행
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.11'
+
+      - name: 의존성 설치
+        run: uv sync
+
+      - name: 인덱스 캐시 복원
+        uses: actions/cache@v4
+        with:
+          path: .cache/
+          key: notice-cache-${{ github.run_id }}
+          restore-keys: notice-cache-
+
+      - name: 자산 Issue 생성
+        env:
+          GITHUB_TOKEN: ${{ secrets.NOTICE_SOLVER_TOKEN }}
+          GITHUB_REPO_OWNER: ${{ github.repository_owner }}
+          GITHUB_REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          ARGS="--limit ${{ inputs.limit || '100' }}"
+          if [ -n "${{ inputs.notice_number }}" ]; then
+            ARGS="--notice ${{ inputs.notice_number }}"
+          fi
+          uv run notice-solver assets create $ARGS
